@@ -1,5 +1,5 @@
 import React from 'react';
-import { Twitter, Linkedin, Facebook, MessageCircle } from 'lucide-react';
+import { Twitter, Linkedin, Facebook, MessageCircle, Instagram } from 'lucide-react';
 import type { SocialMediaPost } from '../types';
 
 interface PlatformPreviewProps {
@@ -11,6 +11,7 @@ const platformIcons = {
   twitter: Twitter,
   linkedin: Linkedin,
   facebook: Facebook,
+  instagram: Instagram,
   telegram: MessageCircle,
 } as const;
 

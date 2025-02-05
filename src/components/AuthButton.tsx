@@ -5,7 +5,16 @@ import { supabase } from '../services/supabase';
 
 export const AuthButton = () => {
   const navigate = useNavigate();
-  const user = supabase.auth.getUser();
+  const [user, setUser] = React.useState<any | null>(null);
+
+  React.useEffect(() => {
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    };
+
+    fetchUser();
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
