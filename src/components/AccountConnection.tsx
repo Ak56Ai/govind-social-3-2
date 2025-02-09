@@ -10,13 +10,6 @@ export const AccountConnection: React.FC<AccountConnectionProps> = ({ onAccountC
   const socialMediaService = new SocialMediaService();
   const DOMAIN = 'https://www.socialsync.fun';
 
-  // Store environment variables in constants for better reliability
-  const TWITTER_CLIENT_ID = import.meta.env.VITE_TWITTER_CLIENT_ID;
-  const LINKEDIN_CLIENT_ID = import.meta.env.VITE_LINKEDIN_CLIENT_ID;
-  const FACEBOOK_APP_ID = import.meta.env.VITE_FACEBOOK_APP_ID;
-  const INSTAGRAM_CLIENT_ID = import.meta.env.VITE_INSTAGRAM_CLIENT_ID;
-  const TELEGRAM_BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME;
-
   const handleConnect = async (platform: string) => {
     try {
       const connected = await socialMediaService.connectAccount(platform);
@@ -33,31 +26,31 @@ export const AccountConnection: React.FC<AccountConnectionProps> = ({ onAccountC
       id: 'twitter',
       name: 'Twitter',
       icon: Twitter,
-      authUrl: `https://twitter.com/i/oauth2/authorize?client_id=${TWITTER_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(`${DOMAIN}/auth/callback?platform=twitter`)}&scope=tweet.read%20tweet.write%20users.read&code_challenge=challenge&code_challenge_method=plain`
+      authUrl: `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${import.meta.env.VITE_TWITTER_CLIENT_ID}&redirect_uri=${encodeURIComponent(`${DOMAIN}/auth/callback?platform=twitter`)}&scope=tweet.read%20tweet.write%20users.read&state=${Math.random().toString(36).substring(7)}&code_challenge=challenge&code_challenge_method=plain`
     },
     {
       id: 'linkedin',
       name: 'LinkedIn',
       icon: Linkedin,
-      authUrl: `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${LINKEDIN_CLIENT_ID}&redirect_uri=${encodeURIComponent(`${DOMAIN}/auth/callback?platform=linkedin`)}&scope=w_member_social`
+      authUrl: `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${import.meta.env.VITE_LINKEDIN_CLIENT_ID}&redirect_uri=${encodeURIComponent(`${DOMAIN}/auth/callback?platform=linkedin`)}&scope=w_member_social`
     },
     {
       id: 'facebook',
       name: 'Facebook',
       icon: Facebook,
-      authUrl: `https://www.facebook.com/v18.0/dialog/oauth?client_id=${FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(`${DOMAIN}/auth/callback?platform=facebook`)}&scope=pages_manage_posts,pages_read_engagement`
+      authUrl: `https://www.facebook.com/v18.0/dialog/oauth?client_id=${import.meta.env.VITE_FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(`${DOMAIN}/auth/callback?platform=facebook`)}&scope=pages_manage_posts,pages_read_engagement`
     },
     {
       id: 'instagram',
       name: 'Instagram',
       icon: Instagram,
-      authUrl: `https://api.instagram.com/oauth/authorize?client_id=${INSTAGRAM_CLIENT_ID}&redirect_uri=${encodeURIComponent(`${DOMAIN}/auth/callback?platform=instagram`)}&scope=instagram_basic,instagram_content_publish&response_type=code`
+      authUrl: `https://api.instagram.com/oauth/authorize?client_id=${import.meta.env.VITE_INSTAGRAM_CLIENT_ID}&redirect_uri=${encodeURIComponent(`${DOMAIN}/auth/callback?platform=instagram`)}&scope=instagram_basic,instagram_content_publish&response_type=code`
     },
     {
       id: 'telegram',
       name: 'Telegram',
       icon: MessageCircle,
-      authUrl: `https://telegram.me/${TELEGRAM_BOT_USERNAME}?start=auth`
+      authUrl: `https://telegram.me/${import.meta.env.VITE_TELEGRAM_BOT_USERNAME}?start=auth`
     }
   ];
 
@@ -72,10 +65,7 @@ export const AccountConnection: React.FC<AccountConnectionProps> = ({ onAccountC
             className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
             onClick={(e) => {
               e.preventDefault();
-              const newWindow = window.open(authUrl, 'Connect Account', 'width=600,height=700');
-              if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                window.location.href = authUrl; // Fallback if popup fails
-              }
+              window.open(authUrl, 'Connect Account', 'width=600,height=700');
             }}
           >
             <Icon className="w-6 h-6 text-blue-500" />

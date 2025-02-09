@@ -16,6 +16,7 @@ export const AuthCallbackPage = () => {
         const platform = searchParams.get('platform');
         const code = searchParams.get('code');
         const error = searchParams.get('error');
+        const state = searchParams.get('state');
 
         if (error) {
           throw new Error(`Authentication failed: ${error}`);
@@ -55,6 +56,7 @@ export const AuthCallbackPage = () => {
           navigate('/');
         }
       } catch (error: any) {
+        console.error('Auth callback error:', error);
         setStatus(`Error: ${error.message}`);
         setTimeout(() => {
           if (window.opener) {
@@ -71,26 +73,33 @@ export const AuthCallbackPage = () => {
   }, [searchParams, navigate]);
 
   const handleTwitterAuth = async (code: string) => {
-    const tokenResponse = await fetch('https://api.twitter.com/2/oauth2/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${btoa(`${import.meta.env.VITE_TWITTER_CLIENT_ID}:${import.meta.env.VITE_TWITTER_CLIENT_SECRET}`)}`,
-      },
-      body: new URLSearchParams({
-        code,
-        grant_type: 'authorization_code',
-        redirect_uri: `${window.location.origin}/auth/callback?platform=twitter`,
-        code_verifier: 'challenge',
-      }),
-    });
+    try {
+      const tokenResponse = await fetch('https://api.twitter.com/2/oauth2/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: `Basic ${btoa(`${import.meta.env.VITE_TWITTER_CLIENT_ID}:${import.meta.env.VITE_TWITTER_CLIENT_SECRET}`)}`,
+        },
+        body: new URLSearchParams({
+          code,
+          grant_type: 'authorization_code',
+          redirect_uri: `${window.location.origin}/auth/callback?platform=twitter`,
+          code_verifier: 'challenge',
+        }),
+      });
 
-    if (!tokenResponse.ok) {
-      throw new Error('Failed to get Twitter access token');
+      if (!tokenResponse.ok) {
+        const errorData = await tokenResponse.json();
+        console.error('Twitter token error:', errorData);
+        throw new Error('Failed to get Twitter access token');
+      }
+
+      const tokens = await tokenResponse.json();
+      await socialMediaService.connectAccount('twitter');
+    } catch (error) {
+      console.error('Twitter auth error:', error);
+      throw error;
     }
-
-    const tokens = await tokenResponse.json();
-    await socialMediaService.connectAccount('twitter');
   };
 
   const handleLinkedInAuth = async (code: string) => {
