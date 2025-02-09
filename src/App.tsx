@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { MessageInput } from './components/MessageInput';
+import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { PlatformPreview } from './components/PlatformPreview';
 import { SchedulingModal } from './components/SchedulingModal';
 import { Dashboard } from './components/Dashboard';
@@ -281,6 +282,7 @@ function App() {
         <Route path="/plans" element={<PlansPage />} />
         <Route path="/token" element={<TokenPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route
           path="/"
           element={
