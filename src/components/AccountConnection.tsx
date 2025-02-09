@@ -21,12 +21,16 @@ export const AccountConnection: React.FC<AccountConnectionProps> = ({ onAccountC
     }
   };
 
+  // Create a properly encoded callback URL for Twitter
+  const twitterCallbackUrl = `${DOMAIN}/auth/callback?platform=twitter`;
+  const encodedTwitterCallback = encodeURIComponent(twitterCallbackUrl);
+
   const platforms = [
     {
       id: 'twitter',
       name: 'Twitter',
       icon: Twitter,
-      authUrl: `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${import.meta.env.VITE_TWITTER_CLIENT_ID}&redirect_uri=${encodeURIComponent(`${DOMAIN}/auth/callback?platform=twitter`)}&scope=tweet.read%20tweet.write%20users.read&state=${Math.random().toString(36).substring(7)}&code_challenge=challenge&code_challenge_method=plain`
+      authUrl: `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${import.meta.env.VITE_TWITTER_CLIENT_ID}&redirect_uri=${encodedTwitterCallback}&scope=tweet.read%20tweet.write%20users.read&state=${Math.random().toString(36).substring(7)}&code_challenge=challenge&code_challenge_method=plain`
     },
     {
       id: 'linkedin',
