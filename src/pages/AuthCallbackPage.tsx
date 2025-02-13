@@ -61,7 +61,7 @@ export const AuthCallbackPage = () => {
         setError(error.message);
         setStatus('Authentication failed');
         
-        // Don't immediately close/redirect on error to show the error message
+        // Show error for a few seconds before closing/redirecting
         setTimeout(() => {
           if (window.opener) {
             window.opener.postMessage({ type: 'SOCIAL_AUTH_ERROR', error: error.message }, window.location.origin);
@@ -78,19 +78,19 @@ export const AuthCallbackPage = () => {
 
   const handleTwitterAuth = async (code: string) => {
     try {
-      // Use URLSearchParams to properly encode the request body
+      const proxyUrl = 'https://api.socialsync.fun/twitter/token'; // Use your API proxy
       const params = new URLSearchParams({
         code,
         grant_type: 'authorization_code',
         redirect_uri: `${window.location.origin}/auth/callback?platform=twitter`,
         code_verifier: 'challenge',
+        client_id: import.meta.env.VITE_TWITTER_CLIENT_ID,
       });
 
-      const tokenResponse = await fetch('https://api.twitter.com/2/oauth2/token', {
+      const tokenResponse = await fetch(proxyUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Basic ${btoa(`${import.meta.env.VITE_TWITTER_CLIENT_ID}:${import.meta.env.VITE_TWITTER_CLIENT_SECRET}`)}`,
         },
         body: params.toString(),
       });
