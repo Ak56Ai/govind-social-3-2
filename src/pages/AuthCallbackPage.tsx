@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { SocialMediaService } from '../services/socialMedia';
 
@@ -8,6 +8,7 @@ export const AuthCallbackPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState('Verifying authentication...');
+  const [error, setError] = useState<string | null>(null);
   const socialMediaService = new SocialMediaService();
 
   useEffect(() => {
@@ -57,7 +58,10 @@ export const AuthCallbackPage = () => {
         }
       } catch (error: any) {
         console.error('Auth callback error:', error);
-        setStatus(`Error: ${error.message}`);
+        setError(error.message);
+        setStatus('Authentication failed');
+        
+        // Don't immediately close/redirect on error to show the error message
         setTimeout(() => {
           if (window.opener) {
             window.opener.postMessage({ type: 'SOCIAL_AUTH_ERROR', error: error.message }, window.location.origin);
@@ -74,31 +78,50 @@ export const AuthCallbackPage = () => {
 
   const handleTwitterAuth = async (code: string) => {
     try {
+      // Use URLSearchParams to properly encode the request body
+      const params = new URLSearchParams({
+        code,
+        grant_type: 'authorization_code',
+        redirect_uri: `${window.location.origin}/auth/callback?platform=twitter`,
+        code_verifier: 'challenge',
+      });
+
       const tokenResponse = await fetch('https://api.twitter.com/2/oauth2/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Basic ${btoa(`${import.meta.env.VITE_TWITTER_CLIENT_ID}:${import.meta.env.VITE_TWITTER_CLIENT_SECRET}`)}`,
+          'Authorization': `Basic ${btoa(`${import.meta.env.VITE_TWITTER_CLIENT_ID}:${import.meta.env.VITE_TWITTER_CLIENT_SECRET}`)}`,
         },
-        body: new URLSearchParams({
-          code,
-          grant_type: 'authorization_code',
-          redirect_uri: `${window.location.origin}/auth/callback?platform=twitter`,
-          code_verifier: 'challenge',
-        }),
+        body: params.toString(),
       });
 
       if (!tokenResponse.ok) {
         const errorData = await tokenResponse.json();
         console.error('Twitter token error:', errorData);
-        throw new Error('Failed to get Twitter access token');
+        throw new Error(errorData.error_description || 'Failed to get Twitter access token');
       }
 
       const tokens = await tokenResponse.json();
+      
+      // Store the tokens securely
+      const { error: storageError } = await supabase
+        .from('social_media_accounts')
+        .upsert({
+          platform: 'twitter',
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+          user_id: (await supabase.auth.getUser()).data.user?.id
+        });
+
+      if (storageError) {
+        throw new Error('Failed to store Twitter credentials');
+      }
+
       await socialMediaService.connectAccount('twitter');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Twitter auth error:', error);
-      throw error;
+      throw new Error(error.message || 'Failed to authenticate with Twitter');
     }
   };
 
@@ -173,13 +196,25 @@ export const AuthCallbackPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-sm p-8 max-w-md w-full text-center">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          {status}
-        </h2>
-        <p className="text-gray-600">
-          Please wait while we complete the authentication process...
-        </p>
+        {error ? (
+          <div className="flex flex-col items-center gap-4">
+            <AlertCircle className="w-8 h-8 text-red-500" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              {status}
+            </h2>
+            <p className="text-red-600">{error}</p>
+          </div>
+        ) : (
+          <>
+            <Loader2 className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              {status}
+            </h2>
+            <p className="text-gray-600">
+              Please wait while we complete the authentication process...
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
